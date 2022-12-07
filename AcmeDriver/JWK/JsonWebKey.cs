@@ -2,12 +2,28 @@
 using System.Text.Json.Serialization;
 
 namespace AcmeDriver.JWK {
-    public abstract class JsonWebKey {
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(JsonWebKey))]
+	public partial class JsonWebKeySourceGenerationContext : JsonSerializerContext {
+	}
 
-        protected static readonly SHA256 _sha256 = SHA256.Create();
+	//public abstract class JsonWebKey {
 
-        [JsonPropertyName("kty")]
-        public abstract string Kty { get; }
+ //       protected static readonly SHA256 _sha256 = SHA256.Create();
 
-    }
+ //       [JsonPropertyName("kty")]
+ //       public abstract string Kty { get; }
+
+ //   }
+
+	public class JsonWebKey {
+
+		protected static readonly SHA256 _sha256 = SHA256.Create();
+
+		[JsonPropertyName("kty")]
+		public virtual string Kty { get; }
+
+	}
 }

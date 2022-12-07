@@ -11,6 +11,7 @@
     <Authors>Sergey Savchuk</Authors>
     <RepositoryUrl>https://github.com/SavchukSergey/AcmeDriver</RepositoryUrl>
     <LangVersion>latest</LangVersion>
+	 <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
 </Project>

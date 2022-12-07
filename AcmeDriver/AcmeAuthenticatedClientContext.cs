@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http.Headers;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 
 namespace AcmeDriver {
@@ -14,20 +15,20 @@ namespace AcmeDriver {
 			Registration = registration;
 		}
 
-		public Task<TResult> SendPostAsync<TSource, TResult>(Uri uri, TSource model) where TResult : AcmeResource {
-			return _inner.SendPostAsync<TSource, TResult>(uri, model, Registration);
+		public Task<TResult> SendPostAsync<TSource, TResult>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfoSource, JsonTypeInfo<TResult> jsonTypeInfoResult)  where TResult : AcmeResource {
+			return _inner.SendPostAsync<TSource, TResult>(uri, model, jsonTypeInfoSource, jsonTypeInfoResult, Registration);
 		}
 
-		public Task SendPostVoidAsync<TSource>(Uri uri, TSource model) {
-			return _inner.SendPostVoidAsync(uri, model, Registration);
+		public Task SendPostVoidAsync<TSource>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfo) {
+			return _inner.SendPostVoidAsync(uri, model, jsonTypeInfo, Registration);
 		}
 
-		public Task<TResult> SendPostKidAsync<TSource, TResult>(Uri uri, TSource model, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
-			return _inner.SendPostKidAsync<TSource, TResult>(uri, model, Registration, headersHandler);
+		public Task<TResult> SendPostKidAsync<TSource, TResult>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfoSource, JsonTypeInfo<TResult> jsonTypeInfoResult, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
+			return _inner.SendPostKidAsync<TSource, TResult>(uri, model, jsonTypeInfoSource, jsonTypeInfoResult, Registration, headersHandler);
 		}
 
-		public Task<TResult> SendPostAsGetAsync<TResult>(Uri uri, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
-			return _inner.SendPostAsGetAsync(uri, Registration, headersHandler);
+		public Task<TResult> SendPostAsGetAsync<TResult>(Uri uri, JsonTypeInfo<TResult> jsonTypeInfoResult, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
+			return _inner.SendPostAsGetAsync(jsonTypeInfoResult, uri, Registration, headersHandler);
 		}
 
 		public Task<string> SendPostAsGetStringAsync(Uri uri, Action<HttpResponseHeaders, string>? headersHandler = null) {

@@ -1,7 +1,82 @@
 using System;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace AcmeDriver {
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(NewAuthorizationIdentifier))]
+	public partial class NewAuthorizationIdentifierDataSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class NewAuthorizationIdentifier {
+		[JsonPropertyName("type")]
+		public string? Type { get; set; }
+
+		[JsonPropertyName("value")]
+		public string? Value { get; set; }
+	}
+
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(NewAuthorizationData))]
+	public partial class NewAuthorizationDataSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class NewAuthorizationData {
+		[JsonPropertyName("resource")]
+		public string? Resource { get; set; }
+
+		[JsonPropertyName("identifier")]
+		public NewAuthorizationIdentifier? Identifier { get; set; }
+	}
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(PostKidData))]
+	public partial class PostKidDataSourceGenerationContext : JsonSerializerContext {
+	}
+	
+	public class PostKidData {
+		[JsonPropertyName("type")]
+		public string? Type { get; set; }
+
+		[JsonPropertyName("keyAuthorization")]
+		public string? KeyAuthorization { get; set; }
+	}
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(DeleteAuthorizationData))]
+	public partial class DeleteAuthorizationDataSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class DeleteAuthorizationData {
+		[JsonPropertyName("resource")]
+		public string? Resource { get; set; }
+
+		[JsonPropertyName("delete")]
+		public bool Delete { get; set; } = true; 
+	}
+
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(DeactivateAuthorizationData))]
+	public partial class DeactivateAuthorizationDataSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class DeactivateAuthorizationData {
+		[JsonPropertyName("status")]
+		public string? Status { get; set; }		
+	}
+
 	public class AcmeAuthorizationsClient : IAcmeAuthorizationsClient {
 
 		private readonly AcmeAuthenticatedClientContext _context;
@@ -14,13 +89,17 @@ namespace AcmeDriver {
 			if (_context.Directory.NewAuthzUrl == null) {
 				throw new NotSupportedException("New authorization endpoint is not supported");
 			}
-			var data = await _context.SendPostAsync<object, AcmeAuthorizationData>(_context.Directory.NewAuthzUrl, new {
-				resource = "new-authz",
-				identifier = new {
-					type = identifier.Type,
-					value = identifier.Value
+			var data = await _context.SendPostAsync<NewAuthorizationData, AcmeAuthorizationData>(_context.Directory.NewAuthzUrl, new NewAuthorizationData() {
+				Resource = "new-authz",
+				Identifier = new NewAuthorizationIdentifier() {
+					Type = identifier.Type,
+					Value = identifier.Value
 				}
-			}).ConfigureAwait(false);
+			}, 
+			NewAuthorizationDataSourceGenerationContext.Default.NewAuthorizationData, // Input JsonTypeInfo
+			AcmeAuthorizationDataSourceGenerationContext.Default.AcmeAuthorizationData // Result JsonTypeInfo
+			).ConfigureAwait(false);
+			
 			return new AcmeAuthorization(data, _context.Registration);
 		}
 
@@ -32,7 +111,7 @@ namespace AcmeDriver {
 		}
 
 		public async Task<AcmeAuthorization> GetAuthorizationAsync(Uri location) {
-			var data = await _context.SendPostAsGetAsync<AcmeAuthorizationData>(location).ConfigureAwait(false);
+			var data = await _context.SendPostAsGetAsync<AcmeAuthorizationData>(location, AcmeAuthorizationDataSourceGenerationContext.Default.AcmeAuthorizationData).ConfigureAwait(false);
 			data.Location = location;
 			return new AcmeAuthorization(data, _context.Registration);
 		}
@@ -42,9 +121,9 @@ namespace AcmeDriver {
 		///<para>Introduced in https://tools.ietf.org/html/draft-ietf-acme-acme-03</para>
 		///</summary>
 		public Task DeactivateAuthorizationAsync(Uri authorizationUri) {
-			return _context.SendPostVoidAsync(authorizationUri, new {
-				status = AcmeAuthorizationStatus.Deactivated.ToString().ToLower()
-			});
+			return _context.SendPostVoidAsync(authorizationUri, new DeactivateAuthorizationData () {
+				Status = AcmeAuthorizationStatus.Deactivated.ToString().ToLower()
+			}, DeactivateAuthorizationDataSourceGenerationContext.Default.DeactivateAuthorizationData);
 		}
 
 		///<summary>
@@ -53,18 +132,21 @@ namespace AcmeDriver {
 		///<para>Removed in https://tools.ietf.org/html/draft-ietf-acme-acme-03. Use <see cref="M:DeactivateAuthorizationAsync" /></para>
 		///</summary>
 		public Task DeleteAuthorizationAsync(Uri authorizationUri) {
-			return _context.SendPostVoidAsync(authorizationUri, new {
-				resource = "authz",
-				delete = true
-			});
+			return _context.SendPostVoidAsync(authorizationUri, new DeleteAuthorizationData() {
+				Resource = "authz",
+				Delete = true
+			}, DeleteAuthorizationDataSourceGenerationContext.Default.DeleteAuthorizationData);
 		}
 
 		public async Task<AcmeChallenge> CompleteChallengeAsync(AcmeChallenge challenge) {
 			var data = challenge.Data;
-			var res = await _context.SendPostKidAsync<object, AcmeChallengeData>(data.Url, new {
-				type = data.Type,
-				keyAuthorization = data.GetKeyAuthorization(_context.Registration)
-			});
+			var res = await _context.SendPostKidAsync<PostKidData, AcmeChallengeData>(data.Url, new PostKidData() {
+				Type = data.Type,
+				KeyAuthorization = data.GetKeyAuthorization(_context.Registration)
+			}, 
+			PostKidDataSourceGenerationContext.Default.PostKidData,
+			AcmeChallengeDataSourceGenerationContext.Default.AcmeChallengeData
+			);
 			return AcmeChallenge.From(res, challenge.Authorization, _context.Registration);
 		}
 

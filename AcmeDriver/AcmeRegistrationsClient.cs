@@ -1,7 +1,24 @@
 using System;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace AcmeDriver {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcceptAgreementData))]
+	public partial class AcceptAgreementDataSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class AcceptAgreementData {
+		[JsonPropertyName("resource")]
+		public string Resource { get; set; }
+
+		[JsonPropertyName("agreement")]
+		public Uri Agreement { get; set; }
+	}
+
 	public class AcmeRegistrationsClient : IAcmeRegistrationsClient {
 
 		private readonly AcmeAuthenticatedClientContext _context;
@@ -19,14 +36,19 @@ namespace AcmeDriver {
 		}
 
 		public Task<AcmeRegistration> AcceptAgreementAsync(Uri agreementUrl) {
-			return _context.SendPostKidAsync<object, AcmeRegistration>(_context.Registration.Location, new {
-				resource = "reg",
-				agreement = agreementUrl
-			});
+			return _context.SendPostKidAsync<AcceptAgreementData, AcmeRegistration>(_context.Registration.Location, new AcceptAgreementData() {
+				Resource = "reg",
+				Agreement = agreementUrl
+			}, 
+			AcceptAgreementDataSourceGenerationContext.Default.AcceptAgreementData,
+			AcmeRegistrationSourceGenerationContext.Default.AcmeRegistration
+			);
 		}
 
 		public Task<AcmeRegistration> GetRegistrationAsync() {
-			return _context.SendPostAsGetAsync<AcmeRegistration>(_context.Registration.Location, (headers, reg) => {
+			return _context.SendPostAsGetAsync<AcmeRegistration>(
+				_context.Registration.Location, AcmeRegistrationSourceGenerationContext.Default.AcmeRegistration, 
+				(headers, reg) => {
 				reg.Location = headers.Location ?? _context.Registration.Location;
 			});
 		}

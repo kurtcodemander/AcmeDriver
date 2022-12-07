@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using AcmeDriver.Handlers;
@@ -27,11 +28,11 @@ namespace AcmeDriver {
 			});
 		}
 
-		public async Task<TResult> SendGetAsync<TResult>(Uri uri, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
+		public async Task<TResult> SendGetAsync<TResult>(Uri uri, JsonTypeInfo<TResult> jsonTypeInfo, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
 			var request = new HttpRequestMessage(HttpMethod.Get, uri);
 			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			var response = await SendAsync(request).ConfigureAwait(false);
-			return await ProcessRequestAsync(response, headersHandler).ConfigureAwait(false);
+			return await ProcessRequestAsync(jsonTypeInfo, response, headersHandler).ConfigureAwait(false);
 		}
 
 		public async Task SendHeadAsync(Uri uri) {
@@ -40,46 +41,46 @@ namespace AcmeDriver {
 			await ProcessRequestAsync(response).ConfigureAwait(false);
 		}
 
-		public Task<TResult> SendPostAsync<TSource, TResult>(Uri uri, TSource model, AcmeClientRegistration registration) where TResult : AcmeResource {
-			return SendPostAsync<TSource, TResult>(uri, model, registration, (headers, authz) => {
+		public Task<TResult> SendPostAsync<TSource, TResult>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfoSource, JsonTypeInfo<TResult> jsonTypeInfoResult, AcmeClientRegistration registration) where TResult : AcmeResource {
+			return SendPostAsync<TSource, TResult>(uri, model, jsonTypeInfoSource, jsonTypeInfoResult, registration, (headers, authz) => {
 				authz.Location = headers.Location ?? authz.Location;
 			});
 		}
 
-		public Task SendPostVoidAsync<TSource>(Uri uri, TSource model, AcmeClientRegistration registration) {
-			return SendPostResponseAsync(uri, model, registration);
+		public Task SendPostVoidAsync<TSource>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfo, AcmeClientRegistration registration) {
+			return SendPostResponseAsync(uri, model, jsonTypeInfo, registration);
 		}
 
-		public async Task<string> SendPostStringAsync<TSource>(Uri uri, TSource model, AcmeClientRegistration registration, Action<HttpResponseHeaders, string>? headersHandler = null) {
-			var response = await SendPostResponseAsync(uri, model, registration).ConfigureAwait(false);
+		public async Task<string> SendPostStringAsync<TSource>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfo, AcmeClientRegistration registration, Action<HttpResponseHeaders, string>? headersHandler = null) {
+			var response = await SendPostResponseAsync(uri, model, jsonTypeInfo, registration).ConfigureAwait(false);
 			return await ProcessRequestStringAsync(response, headersHandler).ConfigureAwait(false);
 		}
 
-		public async Task<TResult> SendPostAsync<TSource, TResult>(Uri uri, TSource model, AcmeClientRegistration registration, Action<HttpResponseHeaders, TResult> headersHandler) where TResult : class {
-			var response = await SendPostResponseAsync(uri, model, registration).ConfigureAwait(false);
-			return await ProcessRequestAsync(response, headersHandler).ConfigureAwait(false);
+		public async Task<TResult> SendPostAsync<TSource, TResult>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfoSource, JsonTypeInfo<TResult> jsonTypeInfoResult, AcmeClientRegistration registration, Action<HttpResponseHeaders, TResult> headersHandler) where TResult : class {
+			var response = await SendPostResponseAsync(uri, model, jsonTypeInfoSource, registration).ConfigureAwait(false);
+			return await ProcessRequestAsync(jsonTypeInfoResult, response: response, headersHandler: headersHandler).ConfigureAwait(false);
 		}
 
-		public async Task<TResult> SendPostKidAsync<TSource, TResult>(Uri uri, TSource model, AcmeClientRegistration registration, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
+		public async Task<TResult> SendPostKidAsync<TSource, TResult>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfoSource, JsonTypeInfo<TResult> jsonTypeInfoResult, AcmeClientRegistration registration, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
 			if (uri == null) {
 				throw new ArgumentNullException(nameof(uri));
 			}
 			if (registration == null) {
 				throw new ArgumentNullException(nameof(registration));
 			}
-			var dataContent = AcmeJson.Serialize(model);
+			var dataContent = AcmeJson.Serialize(model, jsonTypeInfoSource);
 			var data = Encoding.UTF8.GetBytes(dataContent);
 			return await SendWithNonceAsync(async nonce => {
 				var signedContent = registration.SignKid(uri, nonce, data);
 
 				var response = await PostAsync(uri, GetStringContent(signedContent)).ConfigureAwait(false);
-				return await ProcessRequestAsync(response, headersHandler).ConfigureAwait(false);
+				return await ProcessRequestAsync(jsonTypeInfoResult, response, headersHandler).ConfigureAwait(false);
 			});
 		}
 
-		public async Task<TResult> SendPostAsGetAsync<TResult>(Uri uri, AcmeClientRegistration registration, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
+		public async Task<TResult> SendPostAsGetAsync<TResult>(JsonTypeInfo<TResult> jsonTypeInfoResult, Uri uri, AcmeClientRegistration registration, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
 			var response = await SendPostAsGetResponseAsync(uri, registration).ConfigureAwait(false);
-			return await ProcessRequestAsync(response, headersHandler).ConfigureAwait(false);
+			return await ProcessRequestAsync(jsonTypeInfoResult, response, headersHandler).ConfigureAwait(false);
 		}
 
 		public async Task<string> SendPostAsGetStringAsync(Uri uri, AcmeClientRegistration registration, Action<HttpResponseHeaders, string>? headersHandler = null) {
@@ -157,14 +158,14 @@ namespace AcmeDriver {
 			});
 		}
 
-		public async Task<HttpResponseMessage> SendPostResponseAsync<TSource>(Uri uri, TSource model, AcmeClientRegistration registration) {
+		public async Task<HttpResponseMessage> SendPostResponseAsync<TSource>(Uri uri, TSource model, JsonTypeInfo<TSource> jsonTypeInfo, AcmeClientRegistration registration) {
 			if (uri == null) {
 				throw new ArgumentNullException(nameof(uri));
 			}
 			if (registration == null) {
 				throw new ArgumentNullException(nameof(registration));
 			}
-			var dataContent = AcmeJson.Serialize(model);
+			var dataContent = AcmeJson.Serialize(model, jsonTypeInfo);
 			var data = Encoding.UTF8.GetBytes(dataContent);
 			return await SendWithNonceAsync(async nonce => {
 				var signedContent = registration.Sign(uri, nonce, data);
@@ -188,9 +189,9 @@ namespace AcmeDriver {
 			};
 		}
 
-		private async Task<TResult> ProcessRequestAsync<TResult>(HttpResponseMessage response, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
+		private async Task<TResult> ProcessRequestAsync<TResult>(JsonTypeInfo<TResult> jsonTypeInfo, HttpResponseMessage response, Action<HttpResponseHeaders, TResult>? headersHandler = null) where TResult : class {
 			var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-			var res = AcmeJson.Deserialize<TResult>(responseContent);
+			var res = AcmeJson.Deserialize<TResult>(responseContent, jsonTypeInfo);
 			headersHandler?.Invoke(response.Headers, res);
 			return res;
 		}

@@ -4,11 +4,46 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using AcmeDriver.Utils;
 
 namespace AcmeDriver {
-    public class AcmeDns01Challenge : AcmeChallenge {
+
+	[JsonSourceGenerationOptions(
+		WriteIndented = true,
+		PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(GoogleDnsApiResponse))]
+	public partial class GoogleDnsApiResponseSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class GoogleDnsApiResponse {
+
+		[JsonPropertyName("Answer")]
+		public IList<GoogleDnsApiResponseAnswer> Answers { get; } = new List<GoogleDnsApiResponseAnswer>();
+	}
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(GoogleDnsApiResponseAnswer))]
+	public partial class GoogleDnsApiResponseAnswerSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class GoogleDnsApiResponseAnswer {
+
+		[JsonPropertyName("name")]
+		public string Name { get; set; }
+
+		[JsonPropertyName("type")]
+		public AcmeDns01Challenge.GoogleDnsRecordType Type { get; set; }
+
+		[JsonPropertyName("data")]
+		public string Data { get; set; }
+
+	}
+
+	public class AcmeDns01Challenge : AcmeChallenge {
 
         public string DnsRecord => "_acme-challenge";
 
@@ -33,34 +68,14 @@ namespace AcmeDriver {
             try {
                 using (var client = new HttpClient()) {
                     var responseContent = await client.GetStringAsync(GoogleApiUrl).ConfigureAwait(false);
-                    var res = AcmeJson.Deserialize<GoogleDnsApiResponse>(responseContent);
+                    var res = AcmeJson.Deserialize<GoogleDnsApiResponse>(responseContent, GoogleDnsApiResponseSourceGenerationContext.Default.GoogleDnsApiResponse);
                     return res.Answers.Any(a => a.Type == GoogleDnsRecordType.TXT && (a.Data == DnsRecordContent || a.Data == $"\"{DnsRecordContent}\""));
                 }
             } catch {
                 return false;
             }
         }
-
-        public class GoogleDnsApiResponse {
-
-            [JsonPropertyName("Answer")]
-            public IList<GoogleDnsApiResponseAnswer> Answers { get; } = new List<GoogleDnsApiResponseAnswer>();
-
-        }
-
-        public class GoogleDnsApiResponseAnswer {
-
-            [JsonPropertyName("name")]
-            public string Name { get; set; }
-
-            [JsonPropertyName("type")]
-            public GoogleDnsRecordType Type { get; set; }
-
-            [JsonPropertyName("data")]
-            public string Data { get; set; }
-
-        }
-
+		
         public enum GoogleDnsRecordType {
             TXT = 16
         }

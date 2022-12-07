@@ -2,7 +2,15 @@
 using System.Text.Json.Serialization;
 
 namespace AcmeDriver {
-    public class AcmeRegistration : AcmeResource {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcmeRegistration))]
+	public partial class AcmeRegistrationSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class AcmeRegistration : AcmeResource {
 
         [JsonPropertyName("key")]
         public AcmeRegistrationKey Key { get; set; } = null!;

@@ -1,11 +1,22 @@
 ﻿using System;
 using System.Linq;
+using AcmeDriver.Utils;
+using System.Text.Json.Serialization;
 
 namespace AcmeDriver {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcmeAuthorization))]
+	public partial class AcmeAuthorizationSourceGenerationContext : JsonSerializerContext {
+	}
+
 	public class AcmeAuthorization {
 
 		public AcmeIdentifier Identifier { get; }
 
+		[JsonConverter(typeof(AcmeAuthorizationStatusConverter))]
 		public AcmeAuthorizationStatus Status { get; }
 
 		public DateTimeOffset Expires { get; }

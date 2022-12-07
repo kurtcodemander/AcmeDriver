@@ -12,7 +12,7 @@ namespace AcmeDriver.Handlers {
 				var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 				var contentType = response.Content.Headers.ContentType?.MediaType;
 				if (contentType != null && contentType.Contains("application") && contentType.Contains("json")) {
-					var res = !string.IsNullOrWhiteSpace(content) ? AcmeJson.Deserialize<AcmeExceptionInfo>(content) : null;
+					var res = !string.IsNullOrWhiteSpace(content) ? AcmeJson.Deserialize<AcmeExceptionInfo>(content, AcmeExceptionInfoSourceGenerationContext.Default.AcmeExceptionInfo) : null;
 					throw new AcmeException(res);
 				} else {
 					throw new AcmeException(new AcmeExceptionInfo {

@@ -1,7 +1,16 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace AcmeDriver.CLI {
-    public class AcmeOrderModel {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcmeOrderModel))]
+	public partial class AcmeOrderModelSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class AcmeOrderModel {
 
         public AcmeOrderStatus Status { get; set; }
 
@@ -13,7 +22,8 @@ namespace AcmeDriver.CLI {
 
         public Uri Finalize { get; set; }
 
-        public Uri Location { get; init; }
+        //public Uri Location { get; init; }
+		public Uri Location { get; set; }
 
 		public static AcmeOrderModel From(AcmeOrder order) {
 			return new AcmeOrderModel {

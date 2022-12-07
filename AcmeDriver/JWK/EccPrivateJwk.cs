@@ -4,7 +4,15 @@ using System.Text.Json.Serialization;
 using AcmeDriver.Utils;
 
 namespace AcmeDriver.JWK {
-    public class EccPrivateJwk : PrivateJsonWebKey {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(EccPrivateJwk))]
+	public partial class EccPrivateJwkSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class EccPrivateJwk : PrivateJsonWebKey {
 
         [JsonPropertyName("crv")]
         public string Curve { get; set; }

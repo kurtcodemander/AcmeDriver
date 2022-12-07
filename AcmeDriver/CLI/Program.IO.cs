@@ -25,7 +25,7 @@ namespace AcmeDriver.CLI {
 				using var file = File.Open(options.OrderFile, FileMode.Open, FileAccess.Read, FileShare.Read);
 				using var reader = new StreamReader(file);
 				var content = await reader.ReadToEndAsync();
-				var model = Deserialize<AcmeOrderModel>(content);
+				var model = Deserialize<AcmeOrderModel>(content, AcmeOrderModelSourceGenerationContext.Default.AcmeOrderModel);
 
 				var client = await GetClientAsync(options);
 				return await client.Orders.GetOrderAsync(model.Location);

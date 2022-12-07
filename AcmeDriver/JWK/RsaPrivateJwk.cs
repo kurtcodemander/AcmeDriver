@@ -3,7 +3,15 @@ using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 namespace AcmeDriver.JWK {
-    public class RsaPrivateJwk : PrivateJsonWebKey {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(RsaPrivateJwk))]
+	public partial class RsaPrivateJwkSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class RsaPrivateJwk : PrivateJsonWebKey {
 
         [JsonPropertyName("n")]
         public string Modulus { get; set; }

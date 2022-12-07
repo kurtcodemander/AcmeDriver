@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace AcmeDriver.Utils {
     public static class AcmeJson {
@@ -7,17 +8,30 @@ namespace AcmeDriver.Utils {
             Converters = {
                 new AcmeOrderStatusConverter(),
                 new AcmeAuthorizationStatusConverter()
-            }
+            }, 			
         };
 
-        public static T Deserialize<T>(string content) {
-            //todo: , new PrivateJwkConverter()
+		//var context = new MyJsonContext(options);
 
-            return JsonSerializer.Deserialize<T>(content, _options);
-        }
+		//var context = new AcmeOrderSourceGenerationContext(options);
 
-        public static string Serialize<T>(T obj) {
-            return JsonSerializer.Serialize(obj, typeof(object), _options);
-        }
-    }
+		public static T Deserialize<T>(string content, JsonTypeInfo<T> jsonTypeInfo) {
+			//todo: , new PrivateJwkConverter()
+
+			//AcmeOrderSourceGenerationContext.Default.op
+
+			//return JsonSerializer.Deserialize<T>(content, _options, jsonTypeInfo);
+			return JsonSerializer.Deserialize<T>(content, jsonTypeInfo);
+		}
+
+        public static string Serialize<T>(T obj, JsonTypeInfo<T> jsonTypeInfo) {
+            //return JsonSerializer.Serialize(obj, typeof(object), _options);
+			return JsonSerializer.Serialize(obj, jsonTypeInfo);
+		}
+
+		public static string SerializeSimple<T>(T obj) {
+			//return JsonSerializer.Serialize(obj, typeof(object), _options);
+			return JsonSerializer.Serialize(obj);
+		}
+	}
 }

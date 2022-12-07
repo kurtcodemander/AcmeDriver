@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using AcmeDriver.Utils;
+using static AcmeDriver.AcmeDns01Challenge;
 
 namespace AcmeDriver.CLI {
 	public partial class Program {
@@ -137,12 +139,12 @@ namespace AcmeDriver.CLI {
 
 		#region Load & Saving
 
-		private static T Deserialize<T>(string content) {
-			return AcmeJson.Deserialize<T>(content);
+		private static T Deserialize<T>(string content, JsonTypeInfo<T> jsonTypeInfo) {
+			return AcmeJson.Deserialize<T>(content, jsonTypeInfo);
 		}
 
 		private static string Serialize(AcmeOrderModel order) {
-			return AcmeJson.Serialize(order);
+			return AcmeJson.Serialize(order, AcmeOrderModelSourceGenerationContext.Default.AcmeOrderModel);
 		}
 
 		#endregion

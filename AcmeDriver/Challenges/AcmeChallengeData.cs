@@ -2,7 +2,14 @@
 using System.Text.Json.Serialization;
 
 namespace AcmeDriver {
-    public class AcmeChallengeData {
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcmeChallengeData))]
+	public partial class AcmeChallengeDataSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class AcmeChallengeData {
 
         [JsonPropertyName("type")]
         public string Type { get; set; } = default!;

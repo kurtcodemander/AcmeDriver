@@ -2,9 +2,18 @@ using System;
 using System.Text.Json.Serialization;
 
 namespace AcmeDriver {
-    public abstract class AcmeResource {
+	
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcmeResource))]
+	public partial class AcmeResourceSourceGenerationContext : JsonSerializerContext {
+	}
 
-        [JsonIgnore]
+	//public abstract class AcmeResource {
+	public class AcmeResource {
+
+		[JsonIgnore]
         public Uri Location { get; set; }
 
     }

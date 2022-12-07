@@ -2,7 +2,16 @@
 using System.Text.Json.Serialization;
 
 namespace AcmeDriver {
-    public class AcmeDirectory {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcmeDirectory))]
+	public partial class AcmeDirectorySourceGenerationContext : JsonSerializerContext {
+	}
+
+
+	public class AcmeDirectory {
 
         public Uri DirectoryUrl { get; set; } = default!;
 

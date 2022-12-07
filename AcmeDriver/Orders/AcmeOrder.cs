@@ -1,11 +1,21 @@
 using System;
 using System.Text.Json.Serialization;
+using AcmeDriver.Utils;
 
 namespace AcmeDriver {
-    public class AcmeOrder {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(AcmeOrder))]
+	public partial class AcmeOrderSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class AcmeOrder {
 
         [JsonPropertyName("status")]
-        public AcmeOrderStatus Status { get; set; }
+		[JsonConverter(typeof(AcmeOrderStatusConverter))]
+		public AcmeOrderStatus Status { get; set; }
 
         [JsonPropertyName("expires")]
         public DateTimeOffset Expires { get; set; }

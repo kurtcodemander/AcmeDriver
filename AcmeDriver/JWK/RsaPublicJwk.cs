@@ -3,7 +3,15 @@ using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 namespace AcmeDriver.JWK {
-    public class RsaPublicJwk : PublicJsonWebKey {
+
+	[JsonSourceGenerationOptions(
+	WriteIndented = true,
+	PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+	[JsonSerializable(typeof(RsaPublicJwk))]
+	public partial class RsaPublicJwkSourceGenerationContext : JsonSerializerContext {
+	}
+
+	public class RsaPublicJwk : PublicJsonWebKey {
 
         [JsonPropertyName("n")]
         public string Modulus { get; set; }
@@ -15,9 +23,9 @@ namespace AcmeDriver.JWK {
         public override string Kty => "RSA";
 
         protected override string GetJwkThumbprintJson() {
-            var n = AcmeJson.Serialize(Modulus);
-            var e = AcmeJson.Serialize(Exponent);
-            var kty = AcmeJson.Serialize(Kty);
+            var n = AcmeJson.SerializeSimple(Modulus);
+            var e = AcmeJson.SerializeSimple(Exponent);
+            var kty = AcmeJson.SerializeSimple(Kty);
             return $"{{\"e\":{e},\"kty\":{kty},\"n\":{n}}}";
         }
 
